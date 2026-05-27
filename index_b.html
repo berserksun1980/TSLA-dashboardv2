@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSLA // PORTFOLIO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ── Design Tokens ─────────────────────────────────── */
+        :root {
+            --bg:      #0b1623;
+            --surface: #0f1e2d;
+            --grid:    #1c2b3a;
+            --border:  #243447;
+            --text:    #f0f0f0;
+            --dim:     #8b9bb4;
+            --accent:  #ff9f30;
+            --success: #00ff9d;
+            --danger:  #ff4d4d;
+            --font:    'JetBrains Mono', monospace;
+        }
+
+        /* ── Reset ─────────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font);
+            background-color: var(--bg);
+            background-image:
+                linear-gradient(var(--grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 32px 32px;
+            color: var(--text);
+            min-height: 100dvh;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* ── Container ─────────────────────────────────────── */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* ── Header ────────────────────────────────────────── */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 52px;
+        }
+        .header-logo {
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: var(--text);
+        }
+        .header-logo span { color: var(--accent); }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            font-size: 0.75rem;
+            color: var(--dim);
+            letter-spacing: 0.05em;
+        }
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 500;
+        }
+        .dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--dim);
+            flex-shrink: 0;
+        }
+        .dot.live  { background: var(--success); box-shadow: 0 0 5px var(--success); }
+        .dot.error { background: var(--danger); }
+
+        /* ── Metrics strip ─────────────────────────────────── */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+        .metric {
+            padding: 1.25rem 1.5rem;
+            border-right: 1px solid var(--border);
+        }
+        .metric:last-child { border-right: none; }
+        .metric-label {
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--dim);
+            margin-bottom: 0.4rem;
+        }
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+        .metric-value.accent  { color: var(--accent); }
+        .metric-value.success { color: var(--success); }
+        .metric-value.danger  { color: var(--danger); }
+        .metric-sub {
+            font-size: 0.7rem;
+            color: var(--dim);
+            margin-top: 0.2rem;
+        }
+
+        /* ── Main ──────────────────────────────────────────── */
+        .main { padding: clamp(1.5rem, 3vw, 2.5rem) 0; }
+        .section { margin-bottom: 2rem; }
+
+        /* ── Section header ────────────────────────────────── */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--dim);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-title::before {
+            content: '';
+            display: block;
+            width: 3px;
+            height: 12px;
+            background: var(--accent);
+        }
+
+        /* ── Card ──────────────────────────────────────────── */
+        .card {
+            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px;
+            width: 10px; height: 10px;
+            border-top: 2px solid var(--accent);
+            border-left: 2px solid var(--accent);
+        }
+        .card::after {
+            content: '';
+            position: absolute;
+            bottom: -1px; right: -1px;
+            width: 10px; height: 10px;
+            border-bottom: 2px solid var(--accent);
+            border-right: 2px solid var(--accent);
+        }
+
+        /* ── Two-column ────────────────────────────────────── */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 1.5rem;
+            align-items: stretch;
+        }
+
+        /* ── Table ─────────────────────────────────────────── */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        .data-table th {
+            text-align: right;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--dim);
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(11,22,35,0.6);
+        }
+        .data-table th.left { text-align: left; }
+        .data-table td {
+            padding: 0.65rem 1rem;
+            text-align: right;
+            border-bottom: 1px solid var(--grid);
+            color: var(--text);
+            vertical-align: middle;
+        }
+        .data-table td.left { text-align: left; }
+        .data-table tbody tr { transition: background 150ms; }
+        .data-table tbody tr:hover { background: rgba(28,43,58,0.8); }
+        .data-table tfoot td {
+            font-weight: 700;
+            border-top: 1px solid var(--border);
+            border-bottom: none;
+            color: #f0c040;
+            font-size: 0.875rem;
+        }
+
+        /* ── Account tag ───────────────────────────────────── */
+        .acct-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            padding: 0.15rem 0.5rem;
+            border-left: 3px solid;
+            background: rgba(255,255,255,0.03);
+        }
+
+        /* ── Scenario inputs ───────────────────────────────── */
+        .scenario-inputs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-bottom: none;
+        }
+        .scenario-group { display: flex; flex-direction: column; gap: 0.3rem; }
+        .scenario-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .scenario-input-row {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        /* ── Number inputs ─────────────────────────────────── */
+        input[type=number] {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.35rem 0.5rem;
+            outline: none;
+            width: 80px;
+            text-align: right;
+            transition: border-color 150ms;
+            -moz-appearance: textfield;
+        }
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+        input[type=number]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255,159,48,0.15);
+        }
+
+        /* ── CAGR control ──────────────────────────────────── */
+        .cagr-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--dim);
+            letter-spacing: 0.06em;
+        }
+        .cagr-control input { width: 60px; color: var(--accent); }
+
+        /* ── Chart wrappers ────────────────────────────────── */
+        .chart-pad { padding: 1.25rem; }
+        .chart-wrap { position: relative; width: 100%; height: 260px; }
+        .chart-wrap-tall { position: relative; width: 100%; height: 340px; }
+
+        /* ── Footer ────────────────────────────────────────── */
+        .footer {
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+            padding: 0.875rem 0;
+            font-size: 0.7rem;
+            color: var(--dim);
+            letter-spacing: 0.04em;
+        }
+        .footer-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* ── Responsive ────────────────────────────────────── */
+        @media (max-width: 900px) {
+            .two-col { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .metrics { grid-template-columns: repeat(2, 1fr); }
+            .metrics .metric:nth-child(2) { border-right: none; }
+            .metrics .metric:nth-child(4) { border-right: none; }
+            .header-right .timestamp { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────── -->
+<header class="header">
+    <div class="container header-inner">
+        <div class="header-logo">TSLA <span>//</span> PORTFOLIO</div>
+        <div class="header-right">
+            <div class="status-badge">
+                <div class="dot" id="status-dot"></div>
+                <span id="status-text">CONNECTING</span>
+            </div>
+            <div class="timestamp" id="timestamp">--:--:--</div>
+        </div>
+    </div>
+</header>
+
+<!-- ── Metrics strip ──────────────────────────────────────── -->
+<div class="metrics">
+    <div class="metric">
+        <div class="metric-label">TSLA Price</div>
+        <div class="metric-value" id="tsla-price">---</div>
+        <div class="metric-sub">USD / share</div>
+        <div class="metric-sub" id="market-cap" style="margin-top:0.3rem;font-size:0.65rem;color:var(--dim);">Mkt Cap: —</div>
+    </div>
+    <div class="metric">
+        <div class="metric-label">Day Change</div>
+        <div class="metric-value" id="day-change">---</div>
+        <div class="metric-sub" id="day-change-pct">---</div>
+    </div>
+    <div class="metric">
+        <div class="metric-label">Total Shares</div>
+        <div class="metric-value" id="total-shares">---</div>
+        <div class="metric-sub">across all accounts</div>
+    </div>
+    <div class="metric">
+        <div class="metric-label">Total Value <img src="https://flagcdn.com/16x12/us.png" title="USD" alt="USD" style="height:11px;vertical-align:middle;margin-left:3px;cursor:default;"></div>
+        <div class="metric-value" id="total-usd">---</div>
+        <div class="metric-sub" id="pnl-usd" style="font-size:0.8rem;margin-top:0.1rem;"></div>
+    </div>
+    <div class="metric">
+        <div class="metric-label">Total Value <img src="https://flagcdn.com/16x12/ca.png" title="CAD" alt="CAD" style="height:11px;vertical-align:middle;margin-left:3px;cursor:default;"> · <span id="usd-cad">---</span></div>
+        <div class="metric-value" id="total-cad">---</div>
+        <div class="metric-sub" id="pnl-cad" style="font-size:0.8rem;margin-top:0.1rem;"></div>
+    </div>
+</div>
+
+<!-- ── Main ───────────────────────────────────────────────── -->
+<div class="main">
+    <div class="container">
+
+        <!-- Holdings + Distribution -->
+        <div class="section">
+            <div class="two-col">
+                <!-- Holdings table -->
+                <div>
+                    <div class="section-header">
+                        <div class="section-title">Holdings</div>
+                    </div>
+                    <div class="card" style="overflow:hidden;">
+                        <div style="overflow-x:auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th class="left">Account</th>
+                                        <th>Shares</th>
+                                        <th><span title="USD" style="cursor:default;">Value <img src="https://flagcdn.com/16x12/us.png" alt="USD" style="height:10px;vertical-align:middle;"></span></th>
+                                        <th><span title="CAD" style="cursor:default;">Value <img src="https://flagcdn.com/16x12/ca.png" alt="CAD" style="height:10px;vertical-align:middle;"></span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="current-table-body"></tbody>
+                                <tfoot id="current-table-foot"></tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Distribution chart -->
+                <div style="display:flex;flex-direction:column;">
+                    <div class="section-header">
+                        <div class="section-title">Distribution</div>
+                    </div>
+                    <div class="card chart-pad" style="flex:1;">
+                        <div class="chart-wrap" style="height:100%;">
+                            <canvas id="accountPieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Future Scenarios -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Future Scenarios</div>
+            </div>
+            <div class="card" style="overflow:hidden;">
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr style="background:rgba(0,0,0,0.15);">
+                                <td style="border-bottom:1px solid var(--border);"></td>
+                                <td style="border-bottom:1px solid var(--border);padding:0.6rem 1rem;">
+                                    <div style="display:flex;align-items:center;justify-content:flex-end;gap:0.2rem;color:#00e5b0;font-weight:600;font-size:0.875rem;"><span>$</span><input type="number" id="price-0" value="500" oninput="updateFutureTable()"></div>
+                                </td>
+                                <td style="border-bottom:1px solid var(--border);padding:0.6rem 1rem;">
+                                    <div style="display:flex;align-items:center;justify-content:flex-end;gap:0.2rem;color:#ff9f30;font-weight:600;font-size:0.875rem;"><span>$</span><input type="number" id="price-1" value="600" oninput="updateFutureTable()"></div>
+                                </td>
+                                <td style="border-bottom:1px solid var(--border);padding:0.6rem 1rem;">
+                                    <div style="display:flex;align-items:center;justify-content:flex-end;gap:0.2rem;color:#4a9eff;font-weight:600;font-size:0.875rem;"><span>$</span><input type="number" id="price-2" value="1000" oninput="updateFutureTable()"></div>
+                                </td>
+                                <td style="border-bottom:1px solid var(--border);padding:0.6rem 1rem;">
+                                    <div style="display:flex;align-items:center;justify-content:flex-end;gap:0.2rem;color:#c87dd4;font-weight:600;font-size:0.875rem;"><span>$</span><input type="number" id="price-3" value="2000" oninput="updateFutureTable()"></div>
+                                </td>
+                                <td style="border-bottom:1px solid var(--border);padding:0.6rem 1rem;">
+                                    <div style="display:flex;align-items:center;justify-content:flex-end;gap:0.2rem;color:#ff6b6b;font-weight:600;font-size:0.875rem;"><span>$</span><input type="number" id="price-4" value="3000" oninput="updateFutureTable()"></div>
+                                </td>
+                            </tr>
+                            <tr style="background:rgba(11,22,35,0.5);">
+                                <td class="left" style="font-size:0.65rem;color:var(--dim);padding:0.4rem 1rem;border-bottom:1px solid var(--border);">EST. MARKET CAP</td>
+                                <td id="mcap-0" style="font-size:0.65rem;color:var(--dim);border-bottom:1px solid var(--border);"></td>
+                                <td id="mcap-1" style="font-size:0.65rem;color:var(--dim);border-bottom:1px solid var(--border);"></td>
+                                <td id="mcap-2" style="font-size:0.65rem;color:var(--dim);border-bottom:1px solid var(--border);"></td>
+                                <td id="mcap-3" style="font-size:0.65rem;color:var(--dim);border-bottom:1px solid var(--border);"></td>
+                                <td id="mcap-4" style="font-size:0.65rem;color:var(--dim);border-bottom:1px solid var(--border);"></td>
+                            </tr>
+                        </thead>
+                        <tbody id="future-table-body"></tbody>
+                        <tfoot id="future-table-foot"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CAGR Growth -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Projected Growth</div>
+                <div class="cagr-control">
+                    <span>CAGR</span>
+                    <input type="number" id="cagr-input" value="15" oninput="updateCagrChart()">
+                    <span>%</span>
+                </div>
+            </div>
+            <div class="card chart-pad">
+                <div class="chart-wrap-tall">
+                    <canvas id="cagrLineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ── Footer ─────────────────────────────────────────────── -->
+<footer class="footer">
+    <div class="container footer-inner">
+        <div>TSLA // PORTFOLIO &nbsp;·&nbsp; Data via Yahoo Finance / Stooq</div>
+        <div id="footer-status">--</div>
+    </div>
+</footer>
+
+<script>
+    /* ── Data ──────────────────────────────────────────────── */
+    let tslaPriceUSD   = 349.00;
+    let dayChange      = null;
+    let dayChangePct   = null;
+    let exchangeRate   = 1.3822;
+
+    const accounts = [
+        { name: "Yu RRSP",    shares: 3854 },
+        { name: "Yu TSFA",    shares: 450  },
+        { name: "Yu RESP",    shares: 39   },
+        { name: "Shan TSFA",  shares: 1130 },
+        { name: "Shan RRSP",  shares: 158  },
+        { name: "Shan Corp",  shares: 610  },
+        { name: "Yu Non-Reg", shares: 187  },
+    ];
+
+    const CHART_COLORS = ['#ff9f30','#00ff9d','#4a9eff','#c87dd4','#ff6b6b','#5cc8c8','#8b9bb4'];
+    const COL_COLORS   = ['#00e5b0','#ff9f30','#4a9eff','#c87dd4','#ff6b6b'];
+
+    const fmtUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    const fmtCAD = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
+    const fmtNum = new Intl.NumberFormat('en-US');
+
+    /* ── Status ────────────────────────────────────────────── */
+    function setStatus(state, text) {
+        const dot  = document.getElementById('status-dot');
+        const span = document.getElementById('status-text');
+        dot.className = 'dot' + (state === 'live' ? ' live' : state === 'error' ? ' error' : '');
+        span.innerText = text;
+    }
+
+    /* ── Metrics ───────────────────────────────────────────── */
+    function renderMetrics() {
+        const totalShares = accounts.reduce((s, a) => s + a.shares, 0);
+        const totalUSD    = totalShares * tslaPriceUSD;
+        const totalCAD    = totalUSD * exchangeRate;
+
+        const priceEl = document.getElementById('tsla-price');
+        priceEl.innerText   = '$' + tslaPriceUSD.toFixed(2);
+        document.getElementById('market-cap').innerText = 'Mkt Cap: ' + (tslaPriceUSD * 3.76e9 / 1e12).toFixed(2) + 'T';
+        priceEl.className   = 'metric-value ' + (dayChange === null || dayChange >= 0 ? 'success' : 'danger');
+        document.getElementById('total-shares').innerText = fmtNum.format(totalShares);
+        document.getElementById('total-usd').innerText    = fmtUSD.format(totalUSD);
+        document.getElementById('total-cad').innerText    = fmtCAD.format(totalCAD);
+        document.getElementById('usd-cad').innerText      = exchangeRate.toFixed(4);
+
+        if (dayChange !== null) {
+            const pnlUSD  = dayChange * totalShares;
+            const pnlCAD  = pnlUSD * exchangeRate;
+            const sign    = pnlUSD >= 0 ? '+' : '';
+            const color   = pnlUSD >= 0 ? 'var(--success)' : 'var(--danger)';
+            const pnlUSDEl = document.getElementById('pnl-usd');
+            const pnlCADEl = document.getElementById('pnl-cad');
+            pnlUSDEl.innerText = sign + fmtUSD.format(pnlUSD) + ' today';
+            pnlCADEl.innerText = sign + fmtCAD.format(pnlCAD) + ' today';
+            pnlUSDEl.style.color = color;
+            pnlCADEl.style.color = color;
+        }
+
+        const sign   = dayChange >= 0 ? '+' : '';
+        const chgEl  = document.getElementById('day-change');
+        const pctEl  = document.getElementById('day-change-pct');
+        if (dayChange !== null) {
+            const color = dayChange >= 0 ? 'var(--success)' : 'var(--danger)';
+            chgEl.innerText = sign + dayChange.toFixed(2);
+            pctEl.innerText = sign + dayChangePct.toFixed(2) + '%';
+            chgEl.className = 'metric-value ' + (dayChange >= 0 ? 'success' : 'danger');
+            pctEl.style.color = color;
+        }
+    }
+
+    /* ── Holdings table ────────────────────────────────────── */
+    function renderCurrentTable() {
+        let totShares = 0, totUSD = 0, totCAD = 0;
+        const tbody = document.getElementById('current-table-body');
+        tbody.innerHTML = '';
+
+        accounts.forEach((acc, i) => {
+            const valUSD = acc.shares * tslaPriceUSD;
+            const valCAD = valUSD * exchangeRate;
+            totShares += acc.shares;
+            totUSD    += valUSD;
+            totCAD    += valCAD;
+
+            const c  = CHART_COLORS[i % CHART_COLORS.length];
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="left"><span class="acct-tag" style="border-color:${c};color:${c};">${acc.name}</span></td>
+                <td style="color:${c};">${fmtNum.format(acc.shares)}</td>
+                <td style="color:${c};">${fmtUSD.format(valUSD)}</td>
+                <td style="color:${c};font-weight:600;">${fmtCAD.format(valCAD)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('current-table-foot').innerHTML = `
+            <tr>
+                <td class="left" style="font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;">Total</td>
+                <td>${fmtNum.format(totShares)}</td>
+                <td>${fmtUSD.format(totUSD)}</td>
+                <td>${fmtCAD.format(totCAD)}</td>
+            </tr>
+        `;
+        updatePieChart();
+    }
+
+    /* ── Future scenarios ──────────────────────────────────── */
+    function updateFutureTable() {
+        const sharesOut = 3.76e9; // 3.76B shares outstanding
+        const prices    = [0,1,2,3,4].map(i => parseFloat(document.getElementById('price-'+i).value) || 0);
+
+        prices.forEach((p, i) => {
+            document.getElementById('mcap-'+i).innerText = ((p * sharesOut) / 1e12).toFixed(2) + 'T';
+        });
+
+        const totUSD = [0,0,0,0,0];
+        const totCAD = [0,0,0,0,0];
+        const tbody  = document.getElementById('future-table-body');
+        tbody.innerHTML = '';
+
+        accounts.forEach((acc, ai) => {
+            const c  = CHART_COLORS[ai % CHART_COLORS.length];
+            const tr = document.createElement('tr');
+            let html = `<td class="left"><span class="acct-tag" style="border-color:${c};color:${c};">${acc.name}</span></td>`;
+            prices.forEach((p, i) => {
+                const usd = p * acc.shares;
+                const cad = usd * exchangeRate;
+                totUSD[i] += usd;
+                totCAD[i] += cad;
+                const cc = COL_COLORS[i];
+                html += `
+                    <td style="border-left:1px solid var(--grid);">
+                        <div style="color:${cc};font-weight:600;">${fmtUSD.format(usd)}</div>
+                        <div style="color:${cc};opacity:0.6;font-size:0.72rem;margin-top:2px;">${fmtCAD.format(cad)}</div>
+                    </td>`;
+            });
+            tr.innerHTML = html;
+            tbody.appendChild(tr);
+        });
+
+        let foot = '<tr><td class="left" style="font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;">Total</td>';
+        prices.forEach((_, i) => {
+            const cc = COL_COLORS[i];
+            foot += `
+                <td style="border-left:1px solid var(--border);">
+                    <div style="color:${cc};font-weight:700;">${fmtUSD.format(totUSD[i])}</div>
+                    <div style="color:${cc};opacity:0.7;font-size:0.72rem;margin-top:2px;">${fmtCAD.format(totCAD[i])}</div>
+                </td>`;
+        });
+        foot += '</tr>';
+        document.getElementById('future-table-foot').innerHTML = foot;
+    }
+
+    /* ── Charts ────────────────────────────────────────────── */
+    let myPieChart  = null;
+    let myLineChart = null;
+
+    const CHART_DEFAULTS = {
+        color: '#8b9bb4',
+        font: { family: "'JetBrains Mono', monospace", size: 11 },
+    };
+
+    function chartTooltip() {
+        return {
+            backgroundColor: '#0f1e2d',
+            borderColor: '#243447',
+            borderWidth: 1,
+            titleColor: '#8b9bb4',
+            bodyColor: '#f0f0f0',
+            titleFont: CHART_DEFAULTS.font,
+            bodyFont:  CHART_DEFAULTS.font,
+        };
+    }
+
+    function updatePieChart() {
+        if (typeof Chart === 'undefined') return;
+        const ctx    = document.getElementById('accountPieChart').getContext('2d');
+        const data   = accounts.map(a => a.shares * tslaPriceUSD);
+        const labels = accounts.map(a => a.name);
+        const colors = CHART_COLORS.slice(0, accounts.length);
+
+        if (myPieChart) {
+            myPieChart.data.datasets[0].data = data;
+            myPieChart.update();
+        } else {
+            myPieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: '#0b1623', borderWidth: 2 }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                ...CHART_DEFAULTS,
+                                boxWidth: 10,
+                                padding: 10,
+                                generateLabels: chart => chart.data.labels.map((label, i) => ({
+                                    text: label,
+                                    fillStyle: colors[i],
+                                    strokeStyle: colors[i],
+                                    fontColor: colors[i],
+                                }))
+                            }
+                        },
+                        tooltip: {
+                            ...chartTooltip(),
+                            callbacks: { label: ctx => ' ' + fmtUSD.format(ctx.raw) }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    function updateCagrChart() {
+        if (typeof Chart === 'undefined') return;
+        const cagr    = parseFloat(document.getElementById('cagr-input').value) || 0;
+        const years   = [0, 5, 10, 15, 20];
+        const initVal = accounts.reduce((s, a) => s + a.shares * tslaPriceUSD, 0);
+        const dataUSD = years.map(y => initVal * Math.pow(1 + cagr / 100, y));
+        const curYear = new Date().getFullYear();
+        const labels  = years.map(y => y === 0 ? 'Now' : `+${y}yr (${curYear + y})`);
+        const ctx     = document.getElementById('cagrLineChart').getContext('2d');
+
+        if (myLineChart) {
+            myLineChart.data.labels = labels;
+            myLineChart.data.datasets[0].data = dataUSD;
+            myLineChart.update();
+        } else {
+            myLineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Projected Value (USD)',
+                        data: dataUSD,
+                        borderColor: '#ff9f30',
+                        backgroundColor: 'rgba(255,159,48,0.07)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#ff9f30',
+                        pointBorderColor: '#0b1623',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        fill: true,
+                        tension: 0.3,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            ...chartTooltip(),
+                            callbacks: { label: ctx => ' ' + fmtUSD.format(ctx.raw) }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid:  { color: '#1c2b3a' },
+                            ticks: {
+                                ...CHART_DEFAULTS,
+                                callback: v => {
+                                    if (v >= 1e9) return '$' + (v/1e9).toFixed(1) + 'B';
+                                    if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
+                                    if (v >= 1e3) return '$' + (v/1e3).toFixed(0) + 'K';
+                                    return '$' + v;
+                                }
+                            }
+                        },
+                        x: {
+                            grid:  { color: '#1c2b3a' },
+                            ticks: { ...CHART_DEFAULTS }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    /* ── Init ──────────────────────────────────────────────── */
+    function renderAll() {
+        renderMetrics();
+        renderCurrentTable();
+        updateFutureTable();
+        try { updateCagrChart(); } catch(e) {}
+    }
+
+    const base = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+        ? ''
+        : 'https://tsla-dashboard-ten.vercel.app';
+
+    async function fetchData() {
+        try {
+            const [fxData, stockData] = await Promise.all([
+                fetch(`${base}/api/fx`).then(r => r.json()),
+                fetch(`${base}/api/stock`).then(r => r.json()),
+            ]);
+
+            if (fxData?.rate)     exchangeRate = fxData.rate;
+            if (stockData?.price) tslaPriceUSD = parseFloat(stockData.price);
+
+            if (stockData?.change != null) {
+                dayChange    = parseFloat(stockData.change);
+                dayChangePct = parseFloat(stockData.changePercent);
+            } else if (stockData?.previousClose) {
+                const prev   = parseFloat(stockData.previousClose);
+                dayChange    = tslaPriceUSD - prev;
+                dayChangePct = (dayChange / prev) * 100;
+            } else {
+                dayChange    = 0;
+                dayChangePct = 0;
+            }
+
+            renderAll();
+            setStatus('live', 'LIVE');
+            const now = new Date();
+            document.getElementById('timestamp').innerText = now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + '  ' + now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+            document.getElementById('footer-status').innerText = 'Updated ' + now.toLocaleString();
+        } catch(e) {
+            console.error(e);
+            setStatus('error', 'OFFLINE · CACHED');
+            document.getElementById('footer-status').innerText = 'Cached data · ' + e.message;
+        }
+    }
+
+    async function initDashboard() {
+        try { renderAll(); } catch(e) {}
+        setTimeout(() => { try { updateCagrChart(); } catch(e) {} }, 300);
+
+        await fetchData();
+        setInterval(fetchData, 60 * 1000); // refresh every 60 seconds
+    }
+
+    initDashboard();
+    window.addEventListener('load', () => { try { updateCagrChart(); } catch(e) {} });
+</script>
+</body>
+</html>
