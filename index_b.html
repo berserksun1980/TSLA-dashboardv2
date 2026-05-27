@@ -523,7 +523,7 @@
 
         const priceEl = document.getElementById('tsla-price');
         priceEl.innerText   = '$' + tslaPriceUSD.toFixed(2);
-        document.getElementById('market-cap').innerText = 'Mkt Cap: ' + (tslaPriceUSD * 3.76e9 / 1e12).toFixed(2) + 'T';
+        document.getElementById('market-cap').innerText = 'Mkt Cap: ' + (tslaPriceUSD * 3.234e9 / 1e12).toFixed(2) + 'T';
         priceEl.className   = 'metric-value ' + (dayChange === null || dayChange >= 0 ? 'success' : 'danger');
         document.getElementById('total-shares').innerText = fmtNum.format(totalShares);
         document.getElementById('total-usd').innerText    = fmtUSD.format(totalUSD);
@@ -592,7 +592,7 @@
 
     /* ── Future scenarios ──────────────────────────────────── */
     function updateFutureTable() {
-        const sharesOut = 3.76e9; // 3.76B shares outstanding
+        const sharesOut = 3.234e9; // 3.234B basic shares outstanding (Q1 2026)
         const prices    = [0,1,2,3,4].map(i => parseFloat(document.getElementById('price-'+i).value) || 0);
 
         prices.forEach((p, i) => {
